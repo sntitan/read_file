@@ -53,6 +53,10 @@ enum ELE_SEPERATOR_TYPE
 {
     SEP_COMMA,/*,*/
     SEP_COLON,/*:*/
+    SEP_EQUAL,/*=*/
+    SEP_SPACE,/* */
+    SEP_RETURN,/*\r*/
+    SEP_NEXTLINE,/*\n*/
     SEP_END
 };
 

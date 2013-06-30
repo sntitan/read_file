@@ -7,8 +7,7 @@
 
 #define MAX_LINE_CHAR_COUNT 128
 
-char seperator[SEP_END] = {',', ':'};
-/*  没有考虑网址中带有':',','的情况 */
+char seperator[SEP_END] = {',', ':', '=', ' ', '\r', '\n'};
 inline int IsSeperator(char ch, enum ELE_SEPERATOR_TYPE *pType)
 {
     int i = 0;
@@ -141,13 +140,17 @@ int ReadInLine(FILE* pFile, REC_INFO* pLineInfo)
         {
             if(IsSeperator(pLine[readPos],&sepType))
             {
-                pEleEnd = PushEleEnd(pEleEnd, ELE_TEXT, pLine + readPos - eleLen, eleLen);
-                if(pEleEnd == NULL)
+                if(eleLen > 0)
                 {
-                    ret = -3;
-                    goto FREE_AND_RETURN;
+                    pEleEnd = PushEleEnd(pEleEnd, ELE_TEXT, pLine + readPos - eleLen, eleLen);
+                    if(pEleEnd == NULL)
+                    {
+                        ret = -3;
+                        goto FREE_AND_RETURN;
+                    }
+                    eleLen = 0;
                 }
-                eleLen = 0;
+
                 pEleEnd = PushEleEnd(pEleEnd, ELE_SEPERATOR, &sepType, 0);
                 if(pEleEnd == NULL)
                 {
