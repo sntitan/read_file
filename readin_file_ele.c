@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "read_in_file.h"
+#include "common.h"
 #include "readin_file_ele.h"
 
 #define MAX_LINE_CHAR_COUNT 128
