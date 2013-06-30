@@ -23,6 +23,8 @@ enum ELE_SEPERATOR_TYPE
     SEP_END
 };
 
+extern const char seperator[SEP_END];
+
 /* ELEMENT INFO
  * 一个词素的基本信息 */
 typedef struct REC_INFO_STRU
@@ -36,5 +38,9 @@ typedef struct REC_INFO_STRU
 
 /* 将读入输入文件句柄中的一行，并解析出词素输出 */
 int ReadInLine(FILE* pFile, REC_INFO* pLineInfo);
+
+/* 删除所有的element */
+void DelAllEle(REC_INFO* pEle);
+
 
 #endif
