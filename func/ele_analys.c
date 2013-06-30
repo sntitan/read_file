@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "common.h"
 #include "readin_file_ele.h"
@@ -11,7 +12,7 @@ enum RECORD_TYPE
     REC_TYPE_END
 };
 
-typedef int (REC_TYPE_JUDGE*)(REC_INFO* pEle);
+typedef int (*REC_TYPE_JUDGE)(REC_INFO* pEle);
 
 typedef struct REC_TYPE_CTRL_STRU
 {
@@ -43,7 +44,7 @@ enum REC_INFO_TYPE
     REC_INFO_END
 };
 
-typedef int (REC_INFO_GET*)(REC_INFO* pRec, void* pStr);
+typedef int (*REC_INFO_GET)(REC_INFO* pRec, void* pStr);
 typedef struct REC_INFO_CTRL_STRU
 {
     char name[32];
@@ -54,7 +55,7 @@ extern int GetServerId(REC_INFO* pRec, void* pVal);
 extern int GetUserId(REC_INFO* pRec, void* pVal);
 extern int GetTimeStamp(REC_INFO* pRec, void* pVal);
 extern int GetEvent(REC_INFO* pRec, void* pVal);
-extern int GetGetUrl(REC_INFO* pRec, void* pVal);
+extern int GetUrl(REC_INFO* pRec, void* pVal);
 extern int GetMethod(REC_INFO* pRec, void* pVal);
 extern int GetFlow(REC_INFO* pRec, void* pVal);
 
@@ -88,10 +89,12 @@ REC_INFO_CTRL g_recInfoCtrl[REC_INFO_END] = \
         "flow",
         GetFlow,
     },
-}
+};
 
 inline int imatchText(REC_INFO* pRec, const char* pStr)
 {
+    size_t cmpLen = strlen(pStr);
+    size_t cmpPos = 0;
     if(pRec->type != ELE_TEXT)
     {
         return -1;
@@ -100,10 +103,21 @@ inline int imatchText(REC_INFO* pRec, const char* pStr)
     {
         return -1;
     }
-    return strnicmp(pRec->pContent, pStr, strlen(pStr));
+    if(strlen(pRec->pContent) < cmpLen)
+    {
+        return -1;
+    }
+    for(cmpPos = 0; cmpPos < cmpLen; ++cmpPos)
+    {
+        if(tolower(pRec->pContent[cmpPos]) != tolower(pStr[cmpPos]))
+        {
+            return -1;
+        }
+    }
+    return 0;
 }
 
-inline int matchSep(REC_INFO* pRec, enum ELE_SEPERATOR_TYPE sepType)
+inline int matchSep(const REC_INFO* pRec, enum ELE_SEPERATOR_TYPE sepType)
 {
     if(pRec->type != ELE_SEPERATOR)
     {
@@ -181,7 +195,7 @@ int IsNumber(const char* pStr)
     return 1;
 }
 
-inline int GetNumberFromRec(const REC_INFO* pRec, unsigned int* pNum)
+inline int GetNumberFromRec(const REC_INFO* pRec, void* pVal)
 {
     unsigned int* pNum = pVal;
     unsigned int num = 0;
@@ -190,7 +204,7 @@ inline int GetNumberFromRec(const REC_INFO* pRec, unsigned int* pNum)
     {
         return -1;
     }
-    if(sscanf("%u",&num) != 1)
+    if(sscanf(pRec->pContent, "%u",&num) != 1)
     {
         return -1;
     }
@@ -288,7 +302,7 @@ int IsValidTime(const TIME_INFO* pTime)
     || (pTime->year == 2016) 
     || (pTime->year == 2020))
     {
-        datInMon[1] = 29;
+        dayInMon[1] = 29;
     }
 
     if((pTime->month < 1) || (pTime->month > 12))
@@ -360,7 +374,7 @@ int GetTimeStamp(REC_INFO* pRec, void* pVal)
     pCurRec = goaheadRec(pCurRec, 1);
     if(matchSep(pCurRec, SEP_COLON) != 0)
     {
-        RETURN -1;
+        return -1;
     }
     ++recNum;
     pCurRec = goaheadRec(pCurRec, 1);
@@ -375,7 +389,7 @@ int GetTimeStamp(REC_INFO* pRec, void* pVal)
     pCurRec = goaheadRec(pCurRec, 1);
     if(matchSep(pCurRec, SEP_COLON) != 0)
     {
-        RETURN -1;
+        return -1;
     }
     ++recNum;
     pCurRec = goaheadRec(pCurRec, 1);
@@ -436,8 +450,13 @@ int PushStr(char** ppDstStr, unsigned int* pDstMaxLen, const char* pStr)
 {
     size_t curLen = strlen(*ppDstStr);
     size_t srcLen = strlen(pStr);
-    size_t freeLen = dstMaxLen - curLen - 1;
+    size_t freeLen = 0;
     size_t mallocLen = 0;
+
+    if(*pDstMaxLen > 0)
+    {
+        freeLen = *pDstMaxLen - curLen - 1;
+    }
 
     while(srcLen > freeLen + mallocLen)
     {
@@ -484,15 +503,15 @@ int PushStr(char** ppDstStr, unsigned int* pDstMaxLen, const char* pStr)
 int PushChar(char** ppDstStr, unsigned int* pDstMaxLen, char ch)
 {
     char cha[2] = {ch,'\0'};
-    return PushStr(ppDstStr, pDstMaxLen, ch);
+    return PushStr(ppDstStr, pDstMaxLen, cha);
 }
 
 int GetUrl(REC_INFO* pRec, void* pVal)
 {
     REC_INFO* pCurRec = pRec;
     unsigned int recCount = 0;
-    char** ppUrl = NULL;
-    char* pTempUrl = NULL;
+    char** ppUrl = pVal;
+    char* pTemp = NULL;
     unsigned int urlMaxLen = 0;
     while(pCurRec)
     {
@@ -500,8 +519,8 @@ int GetUrl(REC_INFO* pRec, void* pVal)
         {
             if(pCurRec->sep == SEP_COMMA)
             {
-                *ppUrl = pTempUrl;
-                return recCnt;
+                *ppUrl = pTemp;
+                return recCount;
             }
             else
             {
@@ -509,6 +528,7 @@ int GetUrl(REC_INFO* pRec, void* pVal)
                 {
                     break;
                 }
+                ++recCount;
             }
         }
         else if(pCurRec->type == ELE_TEXT)
@@ -517,6 +537,7 @@ int GetUrl(REC_INFO* pRec, void* pVal)
             {
                 break;
             }
+            ++recCount;
         }
         else
         {
@@ -525,9 +546,9 @@ int GetUrl(REC_INFO* pRec, void* pVal)
 
     }
 
-    if(pTempUrl)
+    if(pTemp)
     {
-        free(pTempUrl);
+        free(pTemp);
     }
     return -1;
 }
