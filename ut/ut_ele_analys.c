@@ -62,7 +62,6 @@ void ignoreSpaces_ut()
 extern int GetTimeStamp(REC_INFO* pRec, void* pVal);
 void GetTimeStamp_ut()
 {
-
     REC_INFO rec8 = {ELE_SEPERATOR,NULL,SEP_COMMA,NULL};
     REC_INFO rec7 = {ELE_TEXT,"22",0,&rec8};
     REC_INFO rec6 = {ELE_SEPERATOR,NULL,SEP_COLON,&rec7};
@@ -75,6 +74,54 @@ void GetTimeStamp_ut()
     TIME_INFO time = {0};
     
     Assert(GetTimeStamp(&rec1, &time) == 7);
+    rec1.pContent = "2013.4.31";
+    Assert(GetTimeStamp(&rec1, &time) < 0);
+}
+
+extern int PushStr(char** ppDstStr, unsigned int* pDstMaxLen, const char* pStr);
+void PushStr_ut()
+{
+    unsigned int dstMax = 32;
+    char* pDst = malloc(dstMax);
+    Assert(pDst != NULL);
+    memset(pDst,0,dstMax);
+    
+    Assert(PushStr(&pDst, &dstMax, "http://www.google.com") == 0);
+    Assert(strcmp(pDst,"http://www.google.com") == 0);
+    Assert(dstMax == 32);
+
+    Assert(PushStr(&pDst, &dstMax, "http://www.google.com") == 0);
+    Assert(strcmp(pDst,"http://www.google.comhttp://www.google.com") == 0);
+    Assert(dstMax == 64);
+
+    memset(pDst,0,dstMax);
+    Assert(PushStr(&pDst, &dstMax, "http://www.google.com/abcdefghijklmnopqrspuvwxyzabcdefghijklmnopqrspuvwxyzabcdefghijklmnopqrspuvwxyzabcdefghijklmnopqrspuv") == 0);
+    Assert(strcmp(pDst,"http://www.google.com/abcdefghijklmnopqrspuvwxyzabcdefghijklmnopqrspuvwxyzabcdefghijklmnopqrspuvwxyzabcdefghijklmnopqrspuv") == 0);
+    Assert(dstMax == 128);
+}
+
+extern int GetUrl(REC_INFO* pRec, void* pVal);
+void GetUrl_ut()
+{
+
+    REC_INFO rec8 = {ELE_SEPERATOR,NULL,SEP_COMMA,NULL};
+    REC_INFO rec7 = {ELE_TEXT,"ict&site",0,&rec8};
+    REC_INFO rec5 = {ELE_TEXT,"str",0,&rec7};
+    REC_INFO rec4 = {ELE_SEPERATOR,NULL,SEP_EQUAL,&rec5};
+    REC_INFO rec3 = {ELE_TEXT,"1&safe",0,&rec4};
+    REC_INFO rec2 = {ELE_SEPERATOR,NULL,SEP_EQUAL,&rec3};
+    REC_INFO rec1 = {ELE_TEXT,"http://www.google.com.hk/#newwindow",0,&rec2};
+    
+    char* pStr = NULL;
+    Assert(GetUrl(&rec1, &pStr) == 6);
+    Assert(pStr != NULL);
+
+    if(pStr)
+    {
+        Assert(strcmp(pStr,"http://www.google.com.hk/#newwindow=1&safe=strict&site") == 0);
+        free(pStr);
+    }
+
 }
 
 int main()
@@ -83,4 +130,7 @@ int main()
     matchSep_ut();
     ignoreSpaces_ut();
     GetTimeStamp_ut();
+    PushStr_ut();
+    GetUrl_ut();
 }
+

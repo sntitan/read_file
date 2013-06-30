@@ -456,24 +456,14 @@ int PushStr(char** ppDstStr, unsigned int* pDstMaxLen, const char* pStr)
 {
     size_t curLen = strlen(*ppDstStr);
     size_t srcLen = strlen(pStr);
-    size_t freeLen = 0;
     size_t mallocLen = 0;
-
-    if(*pDstMaxLen > 0)
-    {
-        freeLen = *pDstMaxLen - curLen - 1;
-    }
+    size_t freeLen = *pDstMaxLen - curLen - 1;
 
     while(srcLen > freeLen + mallocLen)
     {
         if(mallocLen == 0)
         {
-            /* maxLen 也是0，说明字符串还未初始化，首先初始化为32长度 */
             mallocLen = *pDstMaxLen * 2;
-            if(mallocLen == 0)
-            {
-                mallocLen = 32;
-            }
             freeLen = 0;
         }
         else
@@ -518,7 +508,14 @@ int GetUrl(REC_INFO* pRec, void* pVal)
     unsigned int recCount = 0;
     char** ppUrl = pVal;
     char* pTemp = NULL;
-    unsigned int urlMaxLen = 0;
+    unsigned int urlMaxLen = 32;
+
+    pTemp = (char*)malloc(urlMaxLen);
+    if(pTemp == NULL)
+    {
+        return -1;
+    }
+    memset(pTemp, 0, urlMaxLen);
     while(pCurRec)
     {
         if(pCurRec->type == ELE_SEPERATOR)
@@ -534,7 +531,6 @@ int GetUrl(REC_INFO* pRec, void* pVal)
                 {
                     break;
                 }
-                ++recCount;
             }
         }
         else if(pCurRec->type == ELE_TEXT)
@@ -543,13 +539,13 @@ int GetUrl(REC_INFO* pRec, void* pVal)
             {
                 break;
             }
-            ++recCount;
         }
         else
         {
             break;
         }
-
+        ++recCount;
+        pCurRec = goaheadRec(pCurRec, 1);
     }
 
     if(pTemp)
