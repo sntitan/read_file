@@ -1,1 +1,2 @@
-userid=1
+S: SvrID=100, User=2, TimeStamp=2012.02.02 20:20:20, Url="www.baidu.com//#q=判断+fgets+是否读完一行&newwindow=1&safe=strict&ei=557PUej5HYbIkwXC04DQBw&start=10&sa=N&bav=on.2,or.&bvm=bv.48572450,d.dGI&fp=af7ee36919aca279&biw=1280&bih=914", Method=GET, Flow=100
+S: SvrID=100, User=3, TimeStamp=2012.02.03 01:02:00, Url="www.baidu.com", Method=GET, Flow=200
