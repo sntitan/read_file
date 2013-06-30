@@ -133,6 +133,10 @@ int ignoreSpaces(const REC_INFO* pRec)
     {
         ++iCnt;
         pRec = pRec->pNext;
+        if(pRec == NULL)
+        {
+            return 0;
+        }
     }
     return iCnt;
 }
@@ -256,10 +260,12 @@ int GetFlow(REC_INFO* pRec, void* pVal)
     {
         return -1;
     }
+    /* 暂时不做流量为0的判断(题目没有要求）
     if(flowCount == 0)
     {
         return -2;
     }
+    */
     *pFlow = flowCount;
     return 1;
 }
@@ -315,7 +321,7 @@ int IsValidTime(const TIME_INFO* pTime)
         return 0;
     }
 
-    if(pTime->hour > 59)
+    if(pTime->hour > 23)
     {
         return 0;
     }
